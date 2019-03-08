@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using contactos.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace contactos.Controllers
 {
@@ -34,6 +35,50 @@ namespace contactos.Controllers
             }
 
             return item;
+        }
+
+        [HttpPost]
+        public async Task<ActionResult<Contacto>> Create([FromBody] Contacto item)
+        {
+            if(item==null)
+            {
+                return BadRequest();
+            }
+
+            _context.Contacto.Add(item);
+            await _context.SaveChangesAsync();
+
+            return CreatedAtAction(nameof(GetById), new {id = item.id}, item);
+        }
+
+        [HttpPut("{id}")]
+        public async Task<IActionResult> Update(long id, [FromBody] Contacto item)
+        {
+            if(item == null || id==0)
+            {
+                return BadRequest();
+            }
+
+            _context.Entry(item).State = EntityState.Modified;
+            await _context.SaveChangesAsync();
+
+            return NoContent();
+        }
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete(long id)
+        {
+            var contact = await _context.Contacto.FindAsync(id);
+
+            if(contact==null)
+            {
+                return NotFound();
+            }
+
+            _context.Contacto.Remove(contact);
+            await _context.SaveChangesAsync();
+
+            return NoContent();
         }
     }
 }
