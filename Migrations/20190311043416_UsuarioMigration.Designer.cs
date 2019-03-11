@@ -3,15 +3,17 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using contactos.Models;
 
 namespace contactos.Migrations
 {
     [DbContext(typeof(ContactosContext))]
-    partial class ContactosContextModelSnapshot : ModelSnapshot
+    [Migration("20190311043416_UsuarioMigration")]
+    partial class UsuarioMigration
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -43,10 +45,6 @@ namespace contactos.Migrations
                     b.Property<string>("username")
                         .ValueGeneratedOnAdd()
                         .HasMaxLength(20);
-
-                    b.Property<DateTime>("FechaCreado");
-
-                    b.Property<string>("email");
 
                     b.Property<string>("password")
                         .IsRequired()

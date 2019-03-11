@@ -6,6 +6,8 @@ using contactos.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
+using Microsoft.AspNetCore.Authorization;  
+
 namespace contactos.Controllers
 {
     [Route("api/v1/[controller]")]
@@ -20,12 +22,14 @@ namespace contactos.Controllers
         }
 
         [HttpGet]
+        [Authorize]
         public IEnumerable<Contacto> GetAll()
         {
             return _context.Contacto.ToList();
         }
 
         [HttpGet("{id}")]
+        [Authorize]
         public async Task<ActionResult<Contacto>> GetById(long id)
         {
             var item = await _context.Contacto.FindAsync(id);
@@ -37,12 +41,26 @@ namespace contactos.Controllers
             return item;
         }
 
-        [HttpPost]
+        [HttpPost, Authorize]
         public async Task<ActionResult<Contacto>> Create([FromBody] Contacto item)
         {
             if(item==null)
             {
                 return BadRequest();
+            }
+
+            var currentUser = HttpContext.User;
+            int years = 0;
+
+            if (currentUser.HasClaim(c => c.Type == "FechaCreado"))
+            {
+                DateTime date = DateTime.Parse(currentUser.Claims.FirstOrDefault(c => c.Type == "FechaCreado").Value);
+                years = DateTime.Today.Year - date.Year;
+            }
+
+            if (years < 2)
+            {
+                return Forbid( );
             }
 
             _context.Contacto.Add(item);
