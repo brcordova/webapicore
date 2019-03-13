@@ -8,6 +8,7 @@ using System.Security.Claims;
 using System.Text;  
 
 using contactos.Models;
+using contactos.Services;
 
 namespace contactos.Controllers  
 {  
@@ -15,23 +16,26 @@ namespace contactos.Controllers
     [ApiController]  
     public class LoginController : Controller  
     {  
-        private IConfiguration _config;  
+        private IConfiguration _config;
+        private IUserService _userService;  
     
-        public LoginController(IConfiguration config)  
+        public LoginController(IConfiguration config, IUserService userService)  
         {  
             _config = config;  
+            _userService = userService;
         }  
         
         [HttpPost]  
         [AllowAnonymous]
-        public IActionResult Login([FromBody]Usuario login)  
+        public IActionResult Login([FromBody]UserDto login)  
         {  
             IActionResult response = Unauthorized();  
 			//Método responsable de Validar las credenciales del usuario y devolver el modelo Usuario
 		    //Para demostración (en este punto) he usado datos de prueba sin persistencia de Datos
 			//Si no retorna un objeto nulo, se procede a generar el JWT.
 			//Usando el método GenerateJSONWebToken
-            var user = AuthenticateUser(login);  
+            //var user = AuthenticateUser(login);  
+            var user = _userService.Authenticate(login.username, login.password);
     
             if (user != null)  
             {  
@@ -41,8 +45,29 @@ namespace contactos.Controllers
     
             return response;  
         }  
+
+        [Authorize]
+        [HttpPost("register")]
+        public IActionResult Register([FromBody] UserDto userDto)
+        {
+            User user = new User {} ;
+            user.username = userDto.username;
+            user.email = userDto.email;
+            user.fechacreado = userDto.FechaCreado;
+
+            try
+            {
+                _userService.Create(user, userDto.password);
+                return Ok();
+            }
+            catch(Exception ex)
+            {
+                return BadRequest(new {message = ex.Message});
+            }
+        }
     
-        private string GenerateJSONWebToken(Usuario userInfo)  
+
+        private string GenerateJSONWebToken(User userInfo)  
         {  
             var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]));  
             var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);  
@@ -50,7 +75,7 @@ namespace contactos.Controllers
             var claims = new[] {
                 new Claim(JwtRegisteredClaimNames.Sub, userInfo.username),
                 new Claim(JwtRegisteredClaimNames.Email, userInfo.email),
-                new Claim("FechaCreado", userInfo.FechaCreado.ToString("yyyy-MM-dd")),
+                new Claim("FechaCreado", userInfo.fechacreado.ToString("yyyy-MM-dd")),
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
             };
     
